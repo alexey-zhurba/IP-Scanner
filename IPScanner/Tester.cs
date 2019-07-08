@@ -22,7 +22,6 @@ namespace IPScanner
 
         public class TestResults
         {
-            private readonly object lock_ = new object();
             private volatile List<IPEndPoint> validEndPoints;
             public List<IPEndPoint> ValidEndPoints { get => validEndPoints; set => validEndPoints = value; }
             public int Valid { get => ValidEndPoints.Count; }
@@ -31,23 +30,7 @@ namespace IPScanner
             private volatile int error;
             public int Error { get => error; set => error = value; }
             private volatile int totalTested;
-            public int TotalTested
-            {
-                get
-                {
-                    lock (lock_)
-                    {
-                        return totalTested;
-                    }
-                }
-                set
-                {
-                    lock (lock_)
-                    {
-                        totalTested = value;
-                    }
-                }
-            }
+            public int TotalTested { get => totalTested; set => totalTested = value; }
             public TestResults()
             {
                 validEndPoints = new List<IPEndPoint>();
