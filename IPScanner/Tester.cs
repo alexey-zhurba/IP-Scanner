@@ -98,7 +98,7 @@ namespace IPScanner
             }
         }
         private List<Thread> threadList;
-        public TestResults Results { get; set; }
+        public TestResults Results { get; private set; }
 
         private volatile bool isRunning;
         private volatile bool stop;
@@ -127,6 +127,7 @@ namespace IPScanner
             Results.Bad = 0;
             Results.Error = 0;
             Results.ValidEndPoints.Clear();
+            Results.TotalTested = 0;
             threadList.Clear();
         }
         public void Start()
@@ -173,13 +174,13 @@ namespace IPScanner
                 for (int i = 0; i < addresses.Count && !stop; i++) //alle addressen durchgehen es sei denn stop ist true.
                 {
                     IPTestStatus status = TestTCP(addresses[i]);
-                    handle_IPTestStatus(status, addresses[i]);
+                    change_results(status, addresses[i]);
                 }
             else if (Protocol == IPScannerProtocol.Icmp)
                 for (int i = 0; i < addresses.Count && !stop; i++)
                 {
                     IPTestStatus status = TestICMP(addresses[i]);
-                    handle_IPTestStatus(status, addresses[i]);
+                    change_results(status, addresses[i]);
                 }
             Debug.WriteLine("Thread " + Thread.CurrentThread.ManagedThreadId + ": " + addresses.First().Address.ToString() + " - " + addresses.Last().Address.ToString() + "\r\n");
         }
@@ -205,28 +206,27 @@ namespace IPScanner
         {
             return Addresses.Count % Threads;
         }
+
+        private readonly object lock_ = new object();
+
         /// <summary>
         /// Verändert die Kontroll-Felder und ruft einen Callback auf. 
         /// </summary>
         /// <param name="iPTestStatus"></param>
         /// <param name="address"></param>
-        private void handle_IPTestStatus(IPTestStatus iPTestStatus, IPEndPoint address)
+        private void change_results(IPTestStatus iPTestStatus, IPEndPoint address)
         {
-            Results.TotalTested++;
-            switch (iPTestStatus)
+            lock (lock_)
             {
-                case IPTestStatus.Success: Results.ValidEndPoints.Add(address); break;
-                case IPTestStatus.Failure: Results.Bad++; break;
-                case IPTestStatus.Error: Results.Error++; break;
+                Results.TotalTested++;
+                switch (iPTestStatus)
+                {
+                    case IPTestStatus.Success: Results.ValidEndPoints.Add(address); break;
+                    case IPTestStatus.Failure: Results.Bad++; break;
+                    case IPTestStatus.Error: Results.Error++; break;
+                }
             }
-            try
-            {
-                OnIPTested(address, iPTestStatus);
-            }
-            catch (Exception)
-            {
-
-            }
+            OnIPTested(address, iPTestStatus);
         }
 
         public IPTestStatus TestTCP(IPEndPoint address)
@@ -246,6 +246,10 @@ namespace IPScanner
                 catch (SocketException)
                 {
                     status = IPTestStatus.Failure; //Timeout
+                }
+                catch (Exception)
+                {
+                    status = IPTestStatus.Error;
                 }
 
             }

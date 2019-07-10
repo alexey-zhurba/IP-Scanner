@@ -22,28 +22,33 @@ namespace IPScanner
             tester.OnIPTested = OnIPTested;
             tester.OnTestFinished = OnTesterFinish;
         }
+        private readonly object lock_ = new object();
 
         private void OnIPTested(IPEndPoint address, Tester.IPTestStatus status)
         {
-            if (!InvokeRequired)
+            lock (lock_)
             {
-                switch (status)
+
+                if (!InvokeRequired)
                 {
-                    case Tester.IPTestStatus.Success: label1.Text = "Valid Connections: " + tester.Results.Valid; break;
-                    case Tester.IPTestStatus.Failure: label2.Text = "Rejected Connections: " + tester.Results.Bad; break;
-                    case Tester.IPTestStatus.Error: label3.Text = "Error: " + tester.Results.Error; break;
-                }
-            }
-            else
-            {
-                Invoke(new Action (() => {
                     switch (status)
                     {
                         case Tester.IPTestStatus.Success: label1.Text = "Valid Connections: " + tester.Results.Valid; break;
                         case Tester.IPTestStatus.Failure: label2.Text = "Rejected Connections: " + tester.Results.Bad; break;
                         case Tester.IPTestStatus.Error: label3.Text = "Error: " + tester.Results.Error; break;
                     }
-                }));
+                }
+                else
+                {
+                    Invoke(new Action(() => {
+                        switch (status)
+                        {
+                            case Tester.IPTestStatus.Success: label1.Text = "Valid Connections: " + tester.Results.Valid; break;
+                            case Tester.IPTestStatus.Failure: label2.Text = "Rejected Connections: " + tester.Results.Bad; break;
+                            case Tester.IPTestStatus.Error: label3.Text = "Error: " + tester.Results.Error; break;
+                        }
+                    }));
+                }
             }
             
         }
