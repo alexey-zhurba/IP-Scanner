@@ -165,6 +165,8 @@ namespace IPScanner
         private void OnTesterFinish(Tester.TestResults results)
         {
             MessageBox.Show("Done!");
+            if (tester.Addresses.Count <= 0)
+                return;
             var path = Directory.GetCurrentDirectory() + "\\IP Scanner";
             Directory.CreateDirectory(path);
             path += string.Format("\\{0} - {1} ({2}).txt", tester.Addresses.First().Address.ToString(), tester.Addresses.Last().Address.ToString(), DateTime.Now.ToString().Replace(":", "_"));
