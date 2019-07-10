@@ -4,14 +4,16 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace IPScanner
 {
     class Formatter
     {
-        public static IPEndPoint Parse(string ipEndPoint)
+        public static bool TryParse(string ipEndPoint, out IPEndPoint result)
         {
-            string[] temp = new string[2];
+            result = new IPEndPoint(0, 0);
+            var temp = new string[2];
             if (!ipEndPoint.Contains(':'))
             {
                 temp[0] = ipEndPoint;
@@ -19,22 +21,63 @@ namespace IPScanner
             }
             else
                 temp = ipEndPoint.Split(':');
-
-            return new IPEndPoint(IPAddress.Parse(temp[0]), int.Parse(temp[1]));
-        }
-        public static IPEndPoint Format(string ipEndPoint, int number)
-        {
-            ipEndPoint = ipEndPoint.Replace("X", "" + number); //ersetze X durch Zahl
-            return Parse(ipEndPoint);
-        }
-        public static List<IPEndPoint> Format(string ipEndpoint, int range1, int range2)
-        {
-            List<IPEndPoint> list = new List<IPEndPoint>();
-            for (int i = range1; i <= range2; i++)
+            IPAddress address;
+            if (!IPAddress.TryParse(temp[0], out address))
             {
-                list.Add(Format(ipEndpoint, i));
+                MessageBox.Show("Please enter a valid IP!");
+                return false;
             }
-            return list;
+            int port;
+            if (!int.TryParse(temp[1], out port))
+            {
+                MessageBox.Show("Please enter a valid port!");
+                return false;
+            }
+            if (IPEndPoint.MinPort <= port && port <= IPEndPoint.MaxPort)
+            {
+                result = new IPEndPoint(address, port);
+                return true;
+            }
+            else
+            {
+                MessageBox.Show("Port out of range!");
+                return false;
+            }
+        }
+        public static bool Format(string ipEndpoint, string range1, string range2, out List<IPEndPoint> ipEndpoints)
+        {
+            ipEndpoints = new List<IPEndPoint>();
+            int r1, r2;
+            if (ipEndpoint.Contains("X"))
+            {
+                if (!int.TryParse(range1, out r1))
+                {
+                    MessageBox.Show("Range 1 is invalid!");
+                    return false;
+                }
+                if (!int.TryParse(range2, out r2))
+                {
+                    MessageBox.Show("Range 2 is invalid!");
+                    return false;
+                }
+            }
+            else
+            {
+                r1 = 0;
+                r2 = r1;
+            }
+            var success = true;
+            for (var i = r1; i <= r2; i++)
+            {
+                IPEndPoint ep;
+                if (!TryParse(ipEndpoint.Replace("X", "" + i), out ep))
+                {
+                    success = false;
+                    break;
+                }
+                ipEndpoints.Add(ep);
+            }
+            return success;
         }
     }
 }

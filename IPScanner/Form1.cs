@@ -40,7 +40,8 @@ namespace IPScanner
                 }
                 else
                 {
-                    Invoke(new Action(() => {
+                    Invoke(new Action(() =>
+                    {
                         switch (status)
                         {
                             case Tester.IPTestStatus.Success: label1.Text = "Valid Connections: " + tester.Results.Valid; break;
@@ -50,7 +51,7 @@ namespace IPScanner
                     }));
                 }
             }
-            
+
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -82,7 +83,7 @@ namespace IPScanner
         {
 
         }
-        
+
         private void textBox1_GotFocus(object sender, EventArgs e)
         {
             if (textBox1.ReadOnly)
@@ -128,11 +129,17 @@ namespace IPScanner
 
         private void button1_Click(object sender, EventArgs e)
         {
+            List<IPEndPoint> endpoints;
+            if (!Formatter.Format(textBox1.Text, textBox2.Text, textBox3.Text, out endpoints))
+            {
+                return;
+            }
+
             label1.Text = "Valid Connections: 0";
             label2.Text = "Rejected Connections: 0";
             label3.Text = "Error: 0";
             toggle();
-            tester.Addresses = Formatter.Format(textBox1.Text, int.Parse(textBox2.Text), int.Parse(textBox3.Text));
+            tester.Addresses = endpoints;
             tester.Protocol = radioButton1.Checked ? Tester.IPScannerProtocol.Tcp : Tester.IPScannerProtocol.Icmp;
             tester.Threads = int.Parse(textBox4.Text);
             tester.Timeout = int.Parse(textBox5.Text);
@@ -149,15 +156,21 @@ namespace IPScanner
             MessageBox.Show("Done!");
             var path = Directory.GetCurrentDirectory() + "\\IP Scanner";
             Directory.CreateDirectory(path);
-            path += string.Format("\\{0} - {1} ({2}).txt", results.ValidEndPoints.First().Address.ToString(), results.ValidEndPoints.Last().Address.ToString(), DateTime.Now.ToString().Replace(":", "_"));
+            path += string.Format("\\{0} - {1} ({2}).txt", tester.Addresses.First().Address.ToString(), tester.Addresses.Last().Address.ToString(), DateTime.Now.ToString().Replace(":", "_"));
             var text = "Totally tested: " + results.TotalTested;
             text += "\r\nValid IPs: " + results.Valid;
             text += "\r\nInvalid IPs: " + results.Bad;
             text += "\r\nOther connection errors: " + results.Error + "\r\n\r\n";
 
-            foreach (var endpoint in results.ValidEndPoints)
+            var validIPS = results.ValidEndPoints.Select(arg => arg.Address.ToString()).Select(Version.Parse)
+    .OrderBy(arg => arg)
+    .Select(arg => arg.ToString())
+    .ToList();
+            var validPorts = results.ValidEndPoints.Select(arg => arg.Port).ToList();
+            validPorts.Sort();
+            for (int i = 0; i < validIPS.Count; i++)
             {
-                text += endpoint.Address.ToString() + ":" + endpoint.Port + "\r\n";
+                text += validIPS[i] + ":" + validPorts[i] + "\r\n";
             }
             File.WriteAllText(path, text);
             if (!InvokeRequired)
@@ -166,11 +179,12 @@ namespace IPScanner
             }
             else
             {
-                Invoke(new Action(() => {
+                Invoke(new Action(() =>
+                {
                     toggle();
                 }));
             }
-                
+
         }
     }
 }

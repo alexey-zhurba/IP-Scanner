@@ -34,6 +34,11 @@ namespace IPScanner
             public TestResults()
             {
                 validEndPoints = new List<IPEndPoint>();
+                Clear();
+            }
+            public void Clear()
+            {
+                validEndPoints.Clear();
                 bad = 0;
                 error = 0;
                 totalTested = 0;
@@ -115,26 +120,17 @@ namespace IPScanner
             addresses = new List<IPEndPoint>();
             threadList = new List<Thread>();
             Results = new TestResults();
-            Reset();
             stop = false;
             isRunning = false;
             Timeout = 20000;
             Protocol = IPScannerProtocol.Tcp;
             Threads = 10;
         }
-        private void Reset()
-        {
-            Results.Bad = 0;
-            Results.Error = 0;
-            Results.ValidEndPoints.Clear();
-            Results.TotalTested = 0;
-            threadList.Clear();
-        }
         public void Start()
         {
             if (isRunning)
                 return;
-            Reset();
+            Results.Clear();
             stop = false;
             isRunning = true;
             if (Threads < 1)
@@ -171,28 +167,28 @@ namespace IPScanner
         {
             List<IPEndPoint> addresses = (List<IPEndPoint>)o; //o ist eine Liste mit IPEndPoints
             if (Protocol == IPScannerProtocol.Tcp) //welches Protokoll ist ausgewählt?
-                for (int i = 0; i < addresses.Count && !stop; i++) //alle addressen durchgehen es sei denn stop ist true.
+                for (var i = 0; i < addresses.Count && !stop; i++) //alle addressen durchgehen es sei denn stop ist true.
                 {
                     IPTestStatus status = TestTCP(addresses[i]);
                     change_results(status, addresses[i]);
                 }
             else if (Protocol == IPScannerProtocol.Icmp)
-                for (int i = 0; i < addresses.Count && !stop; i++)
+                for (var i = 0; i < addresses.Count && !stop; i++)
                 {
                     IPTestStatus status = TestICMP(addresses[i]);
                     change_results(status, addresses[i]);
                 }
-            Debug.WriteLine("Thread " + Thread.CurrentThread.ManagedThreadId + ": " + addresses.First().Address.ToString() + " - " + addresses.Last().Address.ToString() + "\r\n");
         }
         /// <summary>
         /// Wartet auf alle Threads in threadList.
         /// </summary>
         private void threadWatcherMethod()
         {
-            foreach (Thread thr in threadList)
+            foreach (var thr in threadList)
             {
                 thr.Join();
             }
+            threadList.Clear();
             isRunning = false;
             OnTestFinished(Results);
         }
@@ -232,40 +228,34 @@ namespace IPScanner
         public IPTestStatus TestTCP(IPEndPoint address)
         {
             IPTestStatus status;
-            Socket socket = null;
-            IAsyncResult result = null;
             try
             {
-                socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                try
+                using (Socket socket = new Socket(SocketType.Stream, ProtocolType.Tcp))
                 {
-                    result = socket.BeginConnect(address, null, null);
-                    result.AsyncWaitHandle.WaitOne(Timeout, true);
-                    status = socket.Connected ? IPTestStatus.Success : IPTestStatus.Failure;
-                }
-                catch (SocketException)
-                {
-                    status = IPTestStatus.Failure; //Timeout
-                }
-                catch (Exception)
-                {
-                    status = IPTestStatus.Error;
-                }
-
-            }
-            catch (Exception)
-            {
-                status = IPTestStatus.Error;
-            }
-            finally
-            {
-                if (socket != null)
-                {
-                    if (socket.Connected && result != null)
+                    IAsyncResult result = null;
+                    try
                     {
-                        socket.EndConnect(result);
+                        result = socket.BeginConnect(address, null, null);
+                        result.AsyncWaitHandle.WaitOne(Timeout, true);
+                        status = socket.Connected ? IPTestStatus.Success : IPTestStatus.Failure;
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                    finally
+                    {
+                        if (socket.Connected && result != null)
+                        {
+                            socket.EndConnect(result);
+                        }
+                        socket.Close();
                     }
                 }
+            }
+            catch
+            {
+                status = IPTestStatus.Error;
             }
             return status;
         }
