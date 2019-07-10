@@ -24,13 +24,13 @@ namespace IPScanner
             IPAddress address;
             if (!IPAddress.TryParse(temp[0], out address))
             {
-                MessageBox.Show("Please enter a valid IP!");
+                MessageBox.Show("Please enter a valid IP or check ranges!");
                 return false;
             }
             int port;
             if (!int.TryParse(temp[1], out port))
             {
-                MessageBox.Show("Please enter a valid port!");
+                MessageBox.Show("Please enter a valid port or check ranges!");
                 return false;
             }
             if (IPEndPoint.MinPort <= port && port <= IPEndPoint.MaxPort)
