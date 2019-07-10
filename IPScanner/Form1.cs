@@ -135,14 +135,25 @@ namespace IPScanner
                 return;
             }
 
+            int threads, timeout;
+            if(!int.TryParse(textBox4.Text, out threads) || threads <= 0)
+            {
+                MessageBox.Show("Please enter a valid amount of threads!");
+                return;
+            }
+            if (!int.TryParse(textBox5.Text, out timeout) || timeout < 0)
+            {
+                MessageBox.Show("Please enter a valid timeout!");
+                return;
+            }
+            toggle();
             label1.Text = "Valid Connections: 0";
             label2.Text = "Rejected Connections: 0";
             label3.Text = "Error: 0";
-            toggle();
             tester.Addresses = endpoints;
             tester.Protocol = radioButton1.Checked ? Tester.IPScannerProtocol.Tcp : Tester.IPScannerProtocol.Icmp;
-            tester.Threads = int.Parse(textBox4.Text);
-            tester.Timeout = int.Parse(textBox5.Text);
+            tester.Threads = threads;
+            tester.Timeout = timeout;
             tester.Start();
         }
 
