@@ -10,3 +10,5 @@ Tests IPs by either building TCP connections or using the ICMP protocol.
 4. In the field 'Threads' give the amount of threads to be used during the process. Threads allow more IPs to be tested simultaneously thus increasing testing speed but on the other hand using more network/cpu resources.
 
 5. The timeout specifies how long each thread will wait for a response from the other device until it's IP gets marked as invalid.
+
+6. Get the results by opening the automatically created folder IP Scanner.
