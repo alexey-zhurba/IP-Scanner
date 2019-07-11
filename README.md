@@ -1,5 +1,5 @@
 # Description
-Tests IPs by building either TCP connections or using the ICMP protocol.
+Tests IPs by either building TCP connections or using the ICMP protocol.
 # How to use
 1. Enter IP in the first field of "Set Up" and mark the number to be replaced with an 'X' (e.g. "192.168.172.X")
 
