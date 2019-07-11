@@ -11,4 +11,4 @@ Tests IPs by either building TCP connections or using the ICMP protocol.
 
 5. The timeout specifies how long each thread will wait for a response from the other device until it's IP gets marked as invalid.
 
-6. Get the results by opening the automatically created folder IP Scanner.
+6. Get the results by opening the automatically created folder IP Scanner in the directory of the executable (IPScanner.exe).
